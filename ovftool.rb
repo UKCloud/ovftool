@@ -1,4 +1,4 @@
-
+require 'open3'
 class Ovftool
   attr_accessor :source, :target
   
@@ -18,12 +18,29 @@ class Ovftool
   
   def perform()
     puts "Uploading: #{@file_name}"
-    puts "To: #{self.target}"
+    puts "To: #{self.target.gsub(@pass,'REDACTED')}"
     Dir.chdir(@file_path)
-    command =  'ovftool.exe' + ' --machineOutput --vCloudTemplate --acceptAllEulas --allowExtraConfig --noSSLVerify '+@file_name+' '+@target
+    command =  'ovftool.exe' + ' --vCloudTemplate --acceptAllEulas --allowExtraConfig --noSSLVerify '+@file_name+' '+@target
     
-    out =`#{command}`
-    puts out
+    #out =`#{command}`
+    #puts out
+    
+    Open3.popen3(command) do |stdin, stdout, stderr, wait_thr|
+
+      until stdout.closed? do
+        
+        stdout.each do |line|
+          if line.match(/Progress:/) then
+            line = line.chomp
+            print "\r#{line}"
+          else
+            print line
+          end
+        end  
+        return if wait_thr.value.exited?
+      end
+      
+    end
   end
   
   def probe
@@ -31,9 +48,18 @@ class Ovftool
     exec 'ovftool.exe', @source
   end
   
+  def check_pid(pid)
+    begin
+      Process.getpgid( pid )
+      true
+    rescue Errno::ESRCH
+      false
+    end
+
+  end
   
   def generate_string(creds)
-  
+    @pass = creds[:pass]
     dest =  '"vcloud://'+creds[:user]+':'+creds[:pass]+'@'+creds[:url]+':443?org='+creds[:org]+'&catalog='+creds[:catalogue]
     if @file_extension == 'iso'
       dest = dest + '&media='+@file_name
