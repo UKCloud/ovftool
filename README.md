@@ -12,6 +12,7 @@ https://my.vmware.com/web/vmware/details?downloadGroup=OVFTOOL400&productId=353
 Example usage is shown in upload_example.rb
 
 Basically, a Hash is passed with configuration parameters:
+
 E.g
 ```ruby
 vcdconfig= {
@@ -51,4 +52,4 @@ vapp_list = ['vapp1','vapp2','vapp3','etc']
 ovftool.download_many(vapp_list)
 ```
 
-NB: download_many currently does weird studd with STDOUT so progress indication might look a little strange. Works ok though. Max Threads currently set to 5
+NB: download_many currently does weird stuff with STDOUT so progress indication might look a little strange. Works ok though. Max Threads currently set to 5
